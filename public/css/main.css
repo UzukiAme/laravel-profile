@@ -1,10 +1,45 @@
-/*Title positions*/
+/*Title positions: mobile*/
 .container {
   position: fixed;
   width: 100%;
   height: 100%;
 }
-#center-node {
+.title {
+  font-size: 1em;
+}
+#center-node,
+#skills-node,
+#projects-node,
+#contact-node,
+#references-node,
+#interests-node {
   position: absolute;
   text-align: center;
+}
+#skills-node {
+  top: 50px;
+  right: 20px;
+}
+#contact-node {
+  width: 100%;
+}
+#projects-node {
+  top: 40px;
+  left: 20px;
+}
+#references-node {
+  bottom: 20px;
+  left: 20px;
+}
+#interests-node {
+  bottom: 50px;
+  right: 20px;
+}
+#center-node {
+  top: 50%;
+  left: 50%;
+  width: 70%;
+}
+.center-title {
+  font-size: 1.2em;
 }

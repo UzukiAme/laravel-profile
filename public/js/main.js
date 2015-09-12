@@ -1,15 +1,13 @@
 var containerW = $(".container").width();
 var containerH = $(".container").height();
 
+startNodePositions("#center-node");
 function startNodePositions(node) {
-  var nodeW = $("\"" + node + "\"").width();
-  var nodeH = $("\"" + node + "\"").height();
-  var vCenter,
-      hCenter;
-  if(node == ".center-node") {
-    vCenter = (containerH / 2) - (nodeH / 2);
-    hCenter = (containerW / 2) - (nodeW / 2);
-    $(".center-node").css({top: vCenter + "px", left: hCenter + "px"});
+  if(node == "#center-node") {
+    TweenMax.set(node, {
+      xPercent: -50,
+      yPercent: -50
+    });
   } else {
     //Create logic to loop through the nodes and position them evenly around the center without rotating them, and without going off screen, possibly to be extracted to an external funtion.
       //determine whether the node will go on the top or bottom based on how many nodes there are total
