@@ -2,7 +2,18 @@
 @include('expansions.test')
 @section('titles')
 <div class="container">
-  <div id="skills-node" class="node">
+  @foreach($nodes as $node)
+    @if($node->nodes == "Center")
+    <div id="{{strtolower($node->nodes)}}-node" class="node">
+      <h1 class="{{strtolower($node->nodes)}}-title title">April Carter</h1>
+    </div>
+    @else
+    <div id="{{strtolower($node->nodes)}}-node" class="node">
+      <h1 class="{{strtolower($node->nodes)}}-title title">{{$node->nodes}}</h1>
+    </div>
+    @endif
+  @endforeach
+  <!--<div id="skills-node" class="node">
     <h1 class="skills-title title">Skills</h1>
   </div>
   <div id="projects-node" class="node">
@@ -23,5 +34,5 @@
   <div id="interests-node" class="node">
     <h1 class="interests-title title">Interests</h1>
   </div>
-</div>
+</div>-->
 @endsection
