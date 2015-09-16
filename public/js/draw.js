@@ -2,6 +2,10 @@
 //gradient from grey in the fore to black in the back
 //no outline
 //Once the path a good path is created, one will be created for each node using a loop.
+/**
+* Draws node connections
+* @borrows elemPoints as centerCenter, nodeBottomCenter
+*/
 var line;
 function draw() {
   if(line) {
@@ -16,4 +20,4 @@ function draw() {
   line.attr({"stroke-width": 5, stroke: "#000", opacity: 1});
 }
 draw();
-window.onresize = draw;
+$(window).resize(draw());

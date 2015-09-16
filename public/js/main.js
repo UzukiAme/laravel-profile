@@ -1,18 +1,17 @@
 var containerW = $(".container").width();
 var containerH = $(".container").height();
 
-//Instead of using "transform", finish centering
-//in conjunction with css using TweenMax to
-//account for browser compatability.
+//center with TweenMax to help with browser compatability
 TweenMax.set($("#center-node"), {
   xPercent: -50,
   yPercent: -50
 });
 
-/*
-*Get the x and y coordinates of start and end points for the connecting lines.
-*Returns an array of x and y coordinates for the center node's center, and the node's bottom
-* center
+/**
+* Get the x and y coordinates of start and end points for the connecting lines.
+* @returns {array} x and y coordinates for the center, and the node's bottom
+*  center. If there is no node entered, the element coordinates will default to 0, 0
+* @param {string} [node] the id of the node the points are being calculated on.
 */
 function elemPoints(node) {
   //get the dimensions of the title element and the center element
