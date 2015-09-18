@@ -8,38 +8,72 @@ TweenMax.set($("#center-node"), {
 });
 
 /**
-* Get the x and y coordinates, relative to the window, of the center of the index node
-*   as well as the x and y coordinates of the center bottom of the
-*   outer node being connected to the index node.
-* @param {string} [node] the id of the node the coordinates are being calculated on.
-* @returns {array} x and y coordinates for the index, and the outer node's bottom
-*  center. If there is no node entered, the element coordinates will default to 0, 0
+* Get the quadrant or direction the given point is in relative to the index element.
+* @param {integer} x value of the point to be evaluated
+* @param {integer} y value of the point to be evaluated
+* @returns {string} descriptor of the quadrant or direction (top left, up, down, etc.)
+*   Defaults to null if there are no coordinates put in
 */
-function elemPoints(node) {
-  //get the dimensions of the title element and the center element
-  var center = $("#center-node"),
-    node = $(node) || undefined;
-    elemW = node.outerWidth() || 0,
-    elemH = node.outerHeight() || 0,
-    centerW = center.innerWidth(),
-    centerH = center.innerHeight(),
-  //get the x and y coordinates of the node and center
-    elemCoords = node.offset() || 0,
-    centerCoords = center.offset();
-  //find center node's center coordinates
-  var centerX = centerCoords.left + centerW / 2,
-    centerY = centerCoords.top + centerH / 2;
-  //find center node's bottom center coordinates.
-  var nodeBottomX = elemCoords.left + elemW / 2 || 0,
-    nodeBottomY = elemCoords.top + elemH || 0;
+function getQuadrant(x, y) {
+  var indexCenterX = elemPoints().indexCenterX;
+  var indexCenterY = elemPoints().indexCenterY;
+  var x = x || 0;
+  var y = y || 0;
 
+  //default returns null
+  if(x == 0 && y == 0) {
+    return null;
+  //quadrant top left: x < center and y < center
+  } else if (x < indexCenterX && y < indexCenterY) {
+    return "top left";
+  //quadrant top right: x > center and y < center
+  } else if(x > indexCenterX && y < indexCenterY) {
+    return "top right";
+  //quadrant bottom right: x > center and y > center
+  } else if(x > indexCenterX && y > indexCenterY) {
+    return "bottom right";
+  //quadrant bottom left: x < center and y > center
+  } else if(x < indexCenterX && y > indexCenterY) {
+    return "bottom left";
+  //90 deg: x == centerX
+  } else if(x == indexCenterX) {
+    //up: y < center
+    if(y < indexCenterX) {
+      return "up";
+    //down: y > center
+    } else {
+      return "down";
+    }
+  //180 deg: y == centerY
+  } else if(y == indexCenterY) {
+    //left: x < center
+    if(x < indexCenterX) {
+      return "left";
+    //right: x > center
+    } else {
+      return "right";
+    }
+  }
+}
+
+/**
+* Get the x and y coordinates, relative to the window, of the center of the index node.
+*   Currently this funcion only gets one point. However, I anticipate needing to include other
+*   points in the future. So the name will remain the same.
+* @returns {array} x and y coordinates for the index.
+*/
+function elemPoints() {
+  //get the dimensions of the title element and the center element
+  var indexNode = $("#center-node"),
+    centerW = indexNode.innerWidth(),
+    centerH = indexNode.innerHeight();
+  //find center node's center coordinates
+  var centerX = indexNode.offset().left + centerW / 2,
+    centerY = indexNode.offset().top + centerH / 2;
   var points = {
     indexCenterX: centerX,
     indexCenterY: centerY,
-    outerBottomX: nodeBottomX,
-    outerBottomY: nodeBottomY
   };
-
   return points;
 }
 
@@ -51,24 +85,3 @@ $("#skills-node").click(function() {
   .to($("svg"), 3, {top:"10px", height:"20px", width:"20px"},"svg")
   .to($("circle"), 3, {attr:{cx:10, cy:10}}, "svg");
 });
-
-// $("#skills-node").click(function() {
-//   var nodeL = $(this).offset().left;
-//   var nodeT = $(this).offset().top;
-//   var centerL = $("#center-node").offset().left;
-//   var centerT = $("#center-node").offset().top;
-//   TweenMax().to($(this), 1, {top:"50%", left:"50%", xPercent:-50, yPercent:-50, ease:Back.easeOut});
-//   if (nodeT < centerT) {
-//     if (nodeL < centerL) {
-//       TweenMax.to($("#center-node"), 1.2, {right:"40px", bottom:"40px", ease:Back.easeOut});
-//     } else {
-//       TweenMax.to($("#center-node"), 1.2, {left:"40px", bottom:"40px", ease:Back.easeOut});
-//     }
-//   } else {
-//     if(nodeL < centerL) {
-//       TweenMax.to($("#center-node"), 1.2, {top:"40px", right:"40px", ease:Back.easeOut});
-//     } else {
-//       TweenMax.to($("#center-node"), 1.2, {top:"40px", left:"40px", ease:Back.easeOut});
-//     }
-//   }
-// });
