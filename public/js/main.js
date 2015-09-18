@@ -8,10 +8,12 @@ TweenMax.set($("#center-node"), {
 });
 
 /**
-* Get the x and y coordinates of start and end points for the connecting lines.
-* @returns {array} x and y coordinates for the center, and the node's bottom
+* Get the x and y coordinates, relative to the window, of the center of the index node
+*   as well as the x and y coordinates of the center bottom of the
+*   outer node being connected to the index node.
+* @param {string} [node] the id of the node the coordinates are being calculated on.
+* @returns {array} x and y coordinates for the index, and the outer node's bottom
 *  center. If there is no node entered, the element coordinates will default to 0, 0
-* @param {string} [node] the id of the node the points are being calculated on.
 */
 function elemPoints(node) {
   //get the dimensions of the title element and the center element
@@ -32,10 +34,10 @@ function elemPoints(node) {
     nodeBottomY = elemCoords.top + elemH || 0;
 
   var points = {
-    centerX: centerX,
-    centerY: centerY,
-    nodeBottomX: nodeBottomX,
-    nodeBottomY: nodeBottomY
+    indexCenterX: centerX,
+    indexCenterY: centerY,
+    outerBottomX: nodeBottomX,
+    outerBottomY: nodeBottomY
   };
 
   return points;
