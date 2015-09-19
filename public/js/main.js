@@ -7,6 +7,36 @@ TweenMax.set($("#center-node"), {
   yPercent: -50
 });
 
+
+
+/**
+* Get the x and y coordinates of all node centers relative to the browser window.
+* @returns {array} x and y coordinates for the node centers.
+*/
+function elemPoints(node) {
+  var center = $("#center-node"),
+    node = $(node) || undefined;
+    elemW = node.outerWidth() || 0,
+    elemH = node.outerHeight() || 0,
+    centerW = center.innerWidth(),
+    centerH = center.innerHeight(),
+    elemCoords = node.offset() || 0,
+    centerCoords = center.offset();
+  var centerX = centerCoords.left + centerW / 2,
+    centerY = centerCoords.top + centerH / 2;
+  var nodeX = elemCoords.left + elemW / 2 || 0,
+    nodeY = elemCoords.top + elemH / 2 || 0;
+
+  var points = {
+    indexCenterX: centerX,
+    indexCenterY: centerY,
+    nodeCenterX: nodeX,
+    nodeCenterY: nodeY
+  };
+
+  return points;
+}
+
 /**
 * Get the quadrant or direction the given point is in relative to the index element.
 * @param {integer} x value of the point to be evaluated
@@ -54,27 +84,6 @@ function getQuadrant(x, y) {
       return "right";
     }
   }
-}
-
-/**
-* Get the x and y coordinates, relative to the window, of the center of the index node.
-*   Currently this funcion only gets one point. However, I anticipate needing to include other
-*   points in the future. So the name will remain the same.
-* @returns {array} x and y coordinates for the index.
-*/
-function elemPoints() {
-  //get the dimensions of the title element and the center element
-  var indexNode = $("#center-node"),
-    centerW = indexNode.innerWidth(),
-    centerH = indexNode.innerHeight();
-  //find center node's center coordinates
-  var centerX = indexNode.offset().left + centerW / 2,
-    centerY = indexNode.offset().top + centerH / 2;
-  var points = {
-    indexCenterX: centerX,
-    indexCenterY: centerY,
-  };
-  return points;
 }
 
 var height = $(window).height() - 40;
