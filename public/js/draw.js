@@ -1,176 +1,121 @@
-/**
-* Creates a container for each given node in which the svg drawings will reside
-* @param {array || jquery object} all the nodes after wich an svg container shold be created
-* @borrows elemPoints
+
+/*
+Make a container for the nodes
+Give it a z-index of 0 and the index node 1
+Create a canvas within that container and give it a z-index of -1
+Create a circle around the index node that represents its final shape
+Create an arc that mirrors the arc of this circle for the nodes to align on
+Possibly use GSAP to get coordinates along the circle for end points for raphael drawings
+Calculate start points by the coordinates of the nodes
+Draw svg elements with calculated coordinates
 */
 
-function createContainers(nodes) {
-  // var nodesArray = ["#skills-node", "#center-node", "#contact-node", "#projects-node", "#references-node", "#interests-node"]
-  for(i=0, l=nodes.length; i<l; i++) {
-    var node = nodes[i];
-    var wrapperId = $(node).attr("id") + "-svgwrapper";
-    var nodeW = $(node).width();
-    var nodeH = $(node).height();
-    var nodeT = $(node).offset().top;
-    var nodeL = $(node).offset().left;
-    var yDifference = elemPoints(node).nodeCenterY - elemPoints().indexCenterY;
-    var xDifference = elemPoints(node).nodeCenterX - elemPoints().indexCenterX;
-    $(node).after("<div id=\"" + wrapperId + "\" class=\"svgwrapper\"></div>");
-    $("#" + wrapperId).css({
-      position:"absolute",
-      width: function() {
-        if(xDifference < 0) {
-          //left
-          return elemPoints(node).indexCenterX - nodeL;
-        } else if(elemPoints(node).nodeCenterX == elemPoints(node).indexCenterX) {
-          return nodeW;
-        } else {
-          return nodeL - elemPoints(node).indexCenterX + nodeW;
-        }
-      },
-      left: function () {
-        if(xDifference < 0) {
-          return nodeL;
-        } else if(elemPoints(node).nodeCenterX == elemPoints(node).indexCenterX) {
-          return nodeL;
-        } else {
-          return elemPoints(node).indexCenterX;
-        }
-      },
-      height:function() {
-        if(yDifference < 0) {
-          //above
-          return elemPoints(node).indexCenterY - (nodeT + nodeH);
-        } else {
-          return nodeT - elemPoints(node).indexCenterY;
-        }
-      },
-      top: function() {
-        if(yDifference < 0) {
-          return nodeT + nodeH;
-        } else {
-          return elemPoints(node).indexCenterY;
-        }
-      },
-      border:"1px solid black"
-    });
-    if(node == "#center-node") {
-      $("#" + wrapperId).remove();
-    }
-  }
-}
-
 /**
-* Draws node connections
-*
+* Divide the nodes into two arrays used to position them either above or below the index element
+* @param {array} either a jquery object or an array of elements that are to be devided
+* @returns {array} an array that contains the two created by the division
 */
-function draw() {
-  if($(".svgwrapper")) {
-    $(".svgwrapper").remove();
-  }
-  createContainers($(".node").not("#center-node"));
-  var containers = $(".svgwrapper");
-  for(i=0, l=containers.length; i < l; i++) {
-    var container = containers[i];
-    var node = $(container).prev();
-    var containerId = $(container).attr("id");
-    var nodeX = elemPoints(node).nodeCenterX;
-    var nodeY = elemPoints(node).nodeCenterY;
-    var indexCenterX = elemPoints().indexCenterX;
-    var indexCenterY = elemPoints().indexCenterY;
-    var nodeW = $(node).width();
-    var nodeH = $(node).height();
-    var containerW = $(container).width();
-    var containerH = $(container).height();
-    var indexNodeH = $("#center-node").height();
-    var indexNodeW = $("#center-node").width();
+function divideNodes(nodes) {
+  var mod = nodes.length % 2,
+    nodePos = 0,
+    screenTop = [],
+    screenBottom = [],
+    half,
+    t = 0,
+    b = 0;
 
-    var quadrant = getQuadrant(nodeX, nodeY);
-    var paper = new Raphael(containerId, containerW, containerH);
-    var connector, endpoints;
-    switch (quadrant) {
-      case "top left":
-      //start: nodeHalf, #px; end: (canvasW - centerH/2), (canvasH - centerH/2)
-        endpoints = {
-          startX: nodeW/2,
-          endX: containerW,
-          endY: containerH
-        }
-        connector = paper.path("M" + endpoints.startX + ",10L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "up":
-      //start: centerCanvas, #px; end: centerCanvas, canvasH - centerH/2
-        endpoints = {
-          startX: containerW/2,
-          endX: containerW/2,
-          endY: containerH - indexCenterY/2
-        }
-        connector = paper.path("M" + endpoints.startX + ",10L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "top right":
-        // start: (canvasW - nodeHalf), #px; end: 0 + centerW/2, canvasH - centerH/2
-        endpoints = {
-          startX: containerW - nodeW/2,
-          endX: indexNodeW/2,
-          endY: containerH - indexNodeH/2
-        }
-        connector = paper.path("M" + endpoints.startX + ",10L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "right":
-      //start: canvasW - #px, centerCanvas; end: centerW/2, centerCanvas
-        endpoints = {
-          startX: containerW - 10,
-          startY: containerH/2,
-          endX: indexNodeW/2,
-          endY: containerH/2
-        }
-        connector = paper.path("M" + endpoints.startX + "," + endpoints.startY + "L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "bottom right":
-        //start: canvasW - nodeHalf, canvasH - #px; end: 0 + centerW/2, 0 + centerH/2
-        endpoints = {
-          startX: containerW - nodeW/2,
-          startY: containerH - 10,
-          endX: indexNodeW/2,
-          endY: indexNodeH/2
-        }
-        connector = paper.path("M" + endpoints.startX + "," + endpoints.startY + "L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "down":
-      //start: centerCanvas, canvasH - #px; end: centerCanvas, centerH/2
-        endpoints = {
-          startX: containerW/2,
-          startY: containerH - 10,
-          endX: containerW/2,
-          endY: indexNodeH/2
-        }
-        connector = paper.path("M" + endpoints.startX + "," + endpoints.startY + "L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "bottom left":
-      // start: nodeHalf, canvasH - #px; end: canvasW - centerW/2, centerH/2
-        endpoints = {
-           startX: nodeW/2,
-           startY: containerH - 10,
-           endX: containerW - indexNodeW/2,
-           endY: indexNodeH/2
-        }
-        connector = paper.path("M" + endpoints.startX + "," + endpoints.startY + "L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      case "left":
-      // start: #px, centerCanvas; end: canvasW - centerW/2, centerCanvas
-        endpoints = {
-          startY: containerH/2,
-          endX: containerW - indexNodeW/2,
-          endY: containerH/2
-        }
-        connector = paper.path("M10" + "," + endpoints.startY + "L" + endpoints.endX + "," + endpoints.endY);
-        break;
-      default:
-        null;
-    }
-    connector.attr({"stroke":"#636363", "stroke-width":2});
+  if(mod == 1) {
+    half = (nodes.length - 1)/2;
+    for(i = 0, l = nodes.length; i < l; i++) {
+      if(i < half + 1) {
+        screenTop[t] = nodes[i];
+        t++;
+      } else {
+        screenBottom[b] = nodes[i];
+        b++;
+      }
+    }//end for
+  } else {
+    half = nodes.length/2;
+    for(i = 0, l = nodes.length; i < l; i++) {
+      if(i < half) {
+        screenTop[t] = nodes[i];
+        t++;
+      } else {
+        screenBottom[b] = nodes[i];
+        b++;
+      }
+    }//end for
+  }//end if mod
+  var divisions = {screenTop: screenTop, screenBottom: screenBottom};
+  return divisions;
+}//end function
+
+function getPath(orientation) {
+  //divide the width of the screen by the length of the top array + 2
+  var nodes = $(".node").not("#center-node");
+  var width = $(window).width();
+  var topNodes = divideNodes(nodes).screenTop;
+  var bottomNodes = divideNodes(nodes).screenBottom;
+  var section = width/(divideNodes(nodes).screenTop.length + 2);
+  //multiply the result by the number of items in the top array to get the width of the area that will contain the nodes.
+  var containerW = section * topNodes.length;
+  var x1, x2, x3;
+  var y1, y2, y3;
+  if(orientation == top) {
+    y1 = ;
+    y2 = ;
+    y3 = ;
+  } else if(orientation == bottom) {
+    //the bottom ones will go within a container of the same width, further along the same arc reflected to the bottom
+    y1 = ;
+    y2 = ;
+    y3 = ;
+  } else {
+    return null;
   }
+  //set the x1 to the result of the division
+  x1 = section;
+  //set x2 to right above the index node before any animaiton
+  x2 = $("#center-node").offset().left + $("#center-node").innerWidth/2;
+  //set x3 to the result of the division plus the width of the container
+  x3 = section + containerW;
+
+  var points = {
+    x1:x1,
+    x2:x2,
+    x3:x3,
+    y1:y1,
+    y2:y2,
+    y3:y3
+  }
+  return points;
 }
 
-draw();
-window.onresize = draw;
+/*example code from codepen*/
+var quantity = $(".node").not("#center-node").length, duration = 3,
+path = [{x:40, y:200},{x:600, y:40},{x:1200, y:200}],
+position = {x:path[0].x, y:[path[0].y], rotation:0},
+tween = TweenMax.to(position, quantity, {bezier:{type:"through",values:path,autoRotate:false}, ease:Linear.easeNone}),
+tl = new TimelineMax(),
+i, dot;
+path.shift();
+for (i = 0; i < quantity; i++) {
+		 tween.time(i);
+     dot = $("<div />", {id:"dot"+i}).addClass("dot").appendTo("body");
+     TweenLite.set(dot, {x:position.x,y:position.y,rotation:position.rotation});
+		 tl.set(dot, {visibility:"visible"}, i * (duration / quantity))
+     .to(dot,3, {backgroundColor:"red"}, i * (duration / quantity));
+}
+
+// var x1, x2, x3;
+// if(nodeX < indexX) {
+//   x1 =
+//   x2 =
+//   x3 =
+// } else {
+//   x1 =
+//   x2 =
+//   x3 =
+// }
+// var path = [{x:x1 , y:y1 },{x:x2 , y:y2 },{x:x3 ,y:y3}];

@@ -16,31 +16,11 @@
   position: absolute;
   text-align: center;
 }
-#skills-node {
-  top: 50px;
-  right: 20px;
-}
-#contact-node {
-  left: 50%;
-  transform: translateX(-50%);
-}
-#projects-node {
-  top: 40px;
-  left: 20px;
-}
-#references-node {
-  bottom: 20px;
-  left: 20px;
-}
-#interests-node {
-  bottom: 50px;
-  right: 20px;
-}
 #center-node {
   top: 50%;
   left: 50%;
-  width: 70%;
 }
+
 .center-title {
   font-size: 1.2em;
 }
@@ -50,4 +30,12 @@ svg {
 }
 .node {
   z-index: 1;
+}
+
+/*example code from codepen*/
+.dot{
+	position: absolute;
+	width: 5px;
+	height: 2px;
+	background-color: yellow;
 }
