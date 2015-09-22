@@ -15,6 +15,7 @@ var nodes = $(".node").not("#center-node"),
   container = $(".container");
 var windowW = $(window).width(),
   windowH = $(window).height();
+var containerW, section;
 
 function recalculate() {
   windowW = $(window).width();
@@ -71,12 +72,15 @@ var topNodes = divideNodes(nodes).screenTop,
 
 function containerDimensions() {
   var section = windowW/(nodes.length + 2),
-    containerW = section * nodes.length,
-    containerH = windowH;
+    containerW = section * nodes.length;
 
   container.width(containerW).height(containerH);
-  $("#svg-container").width(windowW).height(containerH);
+  $("#svg-container").width(windowW).height(windowH);
+
+  containerW = containerW;
+  section = section;
 }
+containerDimensions();
 
 function createCenter() {
   var paper = new Raphael(container, containerW, containerH);
