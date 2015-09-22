@@ -16,6 +16,16 @@ var nodes = $(".node").not("#center-node"),
 var windowW = $(window).width(),
   windowH = $(window).height();
 
+function recalculate() {
+  windowW = $(window).width();
+  windowH = $(window).height();
+  containerDimensions();
+  createCenter();
+  containerW = containerDimensions().containerW;
+  containerH = containerDimensions().containerH;
+}
+
+
 /**
 * Divide the nodes into two arrays used to position them either above or below the index element
 * @param {array} either a jquery object or an array of elements that are to be devided
@@ -66,68 +76,60 @@ function containerDimensions() {
 
   container.width(containerW).height(containerH);
   $("#svg-container").width(windowW).height(containerH);
-
-  var dimensions = {
-    containerW: containerW,
-    containerH: containerH,
-    section: section
-  }
-  return dimensions;
 }
-var containerH = containerDimensions().containerH,
-  containerW = containerDimensions().containerW,
-  section = containerDimensions().section;
-containerDimensions();
 
 function createCenter() {
-  if($("svg")) {
-    $("svg").remove();
-  }
-  var paper = new Raphael("svg-container", windowW, containerH),
-    radius = windowW * .1,
-    outerRadius = radius + 80;
-  var indexCircle = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, radius);
-  var id = indexCircle.id;
-  var circumference = Math.PI * radius * 2;
-  var arc = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, outerRadius);
-
+  var paper = new Raphael(container, containerW, containerH);
 }
-createCenter();
 
-// function getArcPath(orientation) {
-//   var x1, x2, x3;
-//   var y1, y2, y3;
-//   if(orientation == top) {
-//     y1 = ;
-//     y2 = ;
-//     y3 = ;
-//   } else if(orientation == bottom) {
-//     //the bottom ones will go within a container of the same width, further along the same arc reflected to the bottom
-//     y1 = ;
-//     y2 = ;
-//     y3 = ;
-//   } else {
-//     return null;
-//   }
-//   //set the x1 to the result of the division
-//   x1 = containerDimensions().section;
-//   //set x2 to right above the index node before any animaiton
-//   x2 = $(indexNode).offset().left + $(indexNode).width/2;
-//   //set x3 to the result of the division plus the width of the container
-//   x3 = containerDimensions().section + containerDimensions().containerW;
-//
-//   var points = {
-//     x1:x1,
-//     x2:x2,
-//     x3:x3,
-//     y1:y1,
-//     y2:y2,
-//     y3:y3
-//   }
-//   return points;
-// }
+function getArcPath(orientation) {
+  var x1, x2, x3;
+  var y1, y2, y3;
+  if(orientation == top) {
+    y1 = ;
+    y2 = ;
+    y3 = ;
+  } else if(orientation == bottom) {
+    //the bottom ones will go within a container of the same width, further along the same arc reflected to the bottom
+    y1 = ;
+    y2 = ;
+    y3 = ;
+  } else {
+    return null;
+  }
+  //set the x1 to the result of the division
+  x1 = containerDimensions().section;
+  //set x2 to right above the index node before any animaiton
+  x2 = $(indexNode).offset().left + $(indexNode).width/2;
+  //set x3 to the result of the division plus the width of the container
+  x3 = containerDimensions().section + containerDimensions().containerW;
 
+  var points = {
+    x1:x1,
+    x2:x2,
+    x3:x3,
+    y1:y1,
+    y2:y2,
+    y3:y3
+  }
+  return points;
+}
 
+/*example code from codepen*/
+var quantity = $(".node").not("#center-node").length, duration = 3,
+path = [{x:40, y:200},{x:600, y:40},{x:1200, y:200}],
+position = {x:path[0].x, y:[path[0].y], rotation:0},
+tween = TweenMax.to(position, quantity, {bezier:{type:"through",values:path,autoRotate:false}, ease:Linear.easeNone}),
+tl = new TimelineMax(),
+i, dot;
+path.shift();
+for (i = 0; i < quantity; i++) {
+		 tween.time(i);
+     dot = $("<div />", {id:"dot"+i}).addClass("dot").appendTo("body");
+     TweenLite.set(dot, {x:position.x,y:position.y,rotation:position.rotation});
+		 tl.set(dot, {visibility:"visible"}, i * (duration / quantity))
+     .to(dot,3, {backgroundColor:"red"}, i * (duration / quantity));
+}
 
 // var x1, x2, x3;
 // if(nodeX < indexX) {
@@ -140,13 +142,3 @@ createCenter();
 //   x3 =
 // }
 // var path = [{x:x1 , y:y1 },{x:x2 , y:y2 },{x:x3 ,y:y3}];
-
-function recalculate() {
-  windowW = $(window).width();
-  windowH = $(window).height();
-  containerDimensions();
-  createCenter();
-  containerW = containerDimensions().containerW;
-  containerH = containerDimensions().containerH;
-}
-window.onresize = recalculate;
