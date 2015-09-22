@@ -12,8 +12,8 @@
 
 var nodes = $(".node").not("#center-node"),
   indexNode = $("#center-node"),
-  container = $(".container"),
-  windowW = $(window).width(),
+  container = $(".container");
+var windowW = $(window).width(),
   windowH = $(window).height();
 
 /**
@@ -64,21 +64,33 @@ function containerDimensions() {
     containerW = section * nodes.length,
     containerH = windowH;
 
-  container.height(containerH).width(containerW);
-  $("#svg-container").height(containerH).width(containerW).css({
-    left: section
-  });
+  container.width(containerW).height(containerH);
+  $("#svg-container").width(windowW).height(containerH);
 
-  return {section:section, containerW:containerW, containerH:containerH}
+  var dimensions = {
+    containerW: containerW,
+    containerH: containerH,
+    section: section
+  }
+  return dimensions;
 }
-var containerW = containerDimensions().containerW,
-  containerH = containerDimensions().containerH;
+var containerH = containerDimensions().containerH,
+  containerW = containerDimensions().containerW,
+  section = containerDimensions().section;
 containerDimensions();
-window.onresize = containerDimensions;
 
 function createCenter() {
-  var paper = new Raphael("svg-container", containerW, containerH);
-  paper.circle(200, 200, 50);
+  if($("svg")) {
+    $("svg").remove();
+  }
+  var paper = new Raphael("svg-container", windowW, containerH),
+    radius = windowW * .1,
+    outerRadius = radius + 80;
+  var indexCircle = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, radius);
+  var id = indexCircle.id;
+  var circumference = Math.PI * radius * 2;
+  var arc = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, outerRadius);
+
 }
 createCenter();
 
@@ -115,21 +127,7 @@ createCenter();
 //   return points;
 // }
 
-/*example code from codepen*/
-var quantity = $(".node").not("#center-node").length, duration = 3,
-path = [{x:40, y:200},{x:600, y:40},{x:1200, y:200}],
-position = {x:path[0].x, y:[path[0].y], rotation:0},
-tween = TweenMax.to(position, quantity, {bezier:{type:"through",values:path,autoRotate:false}, ease:Linear.easeNone}),
-tl = new TimelineMax(),
-i, dot;
-path.shift();
-for (i = 0; i < quantity; i++) {
-		 tween.time(i);
-     dot = $("<div />", {id:"dot"+i}).addClass("dot").appendTo("body");
-     TweenLite.set(dot, {x:position.x,y:position.y,rotation:position.rotation});
-		 tl.set(dot, {visibility:"visible"}, i * (duration / quantity))
-     .to(dot,3, {backgroundColor:"red"}, i * (duration / quantity));
-}
+
 
 // var x1, x2, x3;
 // if(nodeX < indexX) {
@@ -142,3 +140,13 @@ for (i = 0; i < quantity; i++) {
 //   x3 =
 // }
 // var path = [{x:x1 , y:y1 },{x:x2 , y:y2 },{x:x3 ,y:y3}];
+
+function recalculate() {
+  windowW = $(window).width();
+  windowH = $(window).height();
+  containerDimensions();
+  createCenter();
+  containerW = containerDimensions().containerW;
+  containerH = containerDimensions().containerH;
+}
+window.onresize = recalculate;

@@ -13,6 +13,6 @@
       </div>
       @endif
     @endforeach
-    <div id="svg-container"></div>
 </div>
+<div id="svg-container"></div>
 @endsection

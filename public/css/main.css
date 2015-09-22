@@ -1,9 +1,9 @@
 /*Title positions: mobile*/
 .container {
   margin: auto;
+  postion: fixed;
 }
 #svg-container {
-  margin: auto;
   position: absolute;
   top: 0;
 }
