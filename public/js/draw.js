@@ -22,8 +22,6 @@ function recalculate() {
   windowH = $(window).height();
   containerDimensions();
   createCenter();
-  containerW = containerDimensions().containerW;
-  containerH = containerDimensions().containerH;
 }
 
 
@@ -83,8 +81,13 @@ function containerDimensions() {
 containerDimensions();
 
 function createCenter() {
-  var paper = new Raphael(container, containerW, containerH);
+  var paper = new Raphael("svg-container", windowW, windowH),
+    radius = windowH * .1,
+    circumference = Math.PI * radius * 2);
+  var indexCircle = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, radius);
+  var outerCircle = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, radius + 50)
 }
+createCenter();
 
 function getArcPath(orientation) {
   var x1, x2, x3;
