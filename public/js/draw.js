@@ -37,6 +37,7 @@ function recalculate() {
   containerDimensions();
   createCenter();
   introPaths();
+  // repositionStart();
 }
 
 
@@ -108,7 +109,6 @@ createCenter();
 * @returns {array} the end position of every node and the path objects to be used in the tween
 */
 function introPaths(nodes) {
-//create the path strings from which the bezier points will be extracted for both the right and left nodes
   var endPoints = [],
     pathsPoints = [],
     guidePathLeft = "M" + (windowW * .2) + " " + (windowH - 100) + "C " + (windowW * .05) + " " + (windowH - 130) + " " + (windowW * .05) + " 80 " + (windowW * .2) + " 50",
