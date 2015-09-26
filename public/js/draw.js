@@ -36,7 +36,9 @@ function recalculate() {
   paper = new Raphael("svg-container", windowW, windowH);
   containerDimensions();
   createCenter();
-  alignNodes();
+  introPaths(leftNodes);
+  introPaths(rightNodes);
+  repositionStart();
 }
 
 
@@ -93,8 +95,6 @@ function containerDimensions() {
 containerDimensions();
 var section = containerDimensions().section;
 
-//Place elements on side arc that begins at a constant y value and ends at a y value that is the height of the window minus a constant value. This way, the arc will expand and shrink with the height of the window. The x coordinates should be a percentage of the window width in typical responsive fashion. At the break point (tbt), the orientation of the nodes will rotate 90 degrees
-
 function createCenter() {
 
   var radius = windowW * .1,
@@ -108,7 +108,6 @@ createCenter();
 * @returns {array} the end position of every node and the path objects to be used in the tween
 */
 function introPaths(nodes) {
-//create the path strings from which the bezier points will be extracted for both the right and left nodes
   var endPoints = [],
     pathsPoints = [],
     guidePathLeft = "M" + (windowW * .2) + " " + (windowH - 100) + "C " + (windowW * .05) + " " + (windowH - 130) + " " + (windowW * .05) + " 80 " + (windowW * .2) + " 50",
@@ -199,4 +198,22 @@ function alignNodes() {
   });
 }
 alignNodes();
+
+
+/**
+* Keep the nodes aligned before anything is clicked when the window is resized.
+*/
+function repositionStart() {
+  var left = introPaths(leftNodes).endPoints,
+    right = introPaths(rightNodes).endPoints;
+  left.forEach(function(item, i) {
+    var node = $("#" + item.node);
+    $(node).css({top:item.y, left:item.x, transform:"none"});
+  });
+  right.forEach(function(item, i) {
+    var node = $("#" + item.node);
+    $(node).css({top:item.y, left:item.x, transform:"none"});
+  });
+}
+
 window.onresize = recalculate;
