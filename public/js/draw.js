@@ -36,7 +36,7 @@ function recalculate() {
   paper = new Raphael("svg-container", windowW, windowH);
   containerDimensions();
   createCenter();
-  alignNodes();
+  introPaths();
 }
 
 
