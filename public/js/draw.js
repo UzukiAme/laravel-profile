@@ -20,6 +20,10 @@ var windowW = $(window).width(),
 var containerW;
 container.width(windowW).height(windowH);
 
+/**
+* Called on window resize to redraw all the custom svg and reevaluate any global variables that will affect the drawing of
+* that svg.
+*/
 function recalculate() {
   windowW = $(window).width();
   windowH = $(window).height();
@@ -100,63 +104,99 @@ function createCenter() {
 createCenter();
 
 /**
-* Executes the initial animation that positions the nodes. The connectors are aligned with the x and y coordinates of the nodes
-* before animation and on every update of the position.
+* Calculates the points to be used in the bezier plugin for the initial animation
+* @returns {array} the end position of every node and the path objects to be used in the tween
 */
-
-function alignNodes() {
-  var arbitrary,
+function introPaths(nodes) {
+//create the path strings from which the bezier points will be extracted for both the right and left nodes
+  var endPoints = [],
+    pathsPoints = [],
     guidePathLeft = "M" + (windowW * .2) + " " + (windowH - 100) + "C " + (windowW * .05) + " " + (windowH - 130) + " " + (windowW * .05) + " 80 " + (windowW * .2) + " 50",
     guidePathRight = "M" + (windowW - (windowW * .2)) + " " + (windowH - 100) + "C " + (windowW - (windowW * .05)) + " " + (windowH - 130) + " " + (windowW - (windowW * .05)) + " 80 " + (windowW - (windowW * .2)) + " 50",
     guideRight = paper.path(guidePathRight).attr({"stroke":"transparent"}),
-    guideLeft = paper.path(guidePathLeft).attr({"stroke":"transparent"}),
-    guideLeftPoints = Raphael.parsePathString(guidePathLeft),
     guideRightPoints = Raphael.parsePathString(guidePathRight),
+    guideLeftPoints = Raphael.parsePathString(guidePathLeft),
+    guideLeft = paper.path(guidePathLeft).attr({"stroke":"transparent"}),
     guideLeftLength = guideLeft.getTotalLength(),
     guideRightLength = guideRight.getTotalLength();
-  TweenMax.set($(leftNodes), {x:guideLeftPoints[0][1], y:guideLeftPoints[0][2]});
 
-  for(i = 0, l = leftNodes.length, p = l - 1; i < l; i++, p--) {
-    var leftNode = leftNodes[i],
-      quantitiy = l,
-      segmentArray = Raphael.parsePathString(guidePathLeft);
-    if(l > 2) {
-        var section = guideLeftLength/(quantitiy - 1),
-        pathLength = section * p,
-        path = guideLeft.getSubpath(0, pathLength),
+  if(nodes == leftNodes) {
+    //Set the start point for the left nodes based on where the bezier path starts
+    //The right node start position must be relative to their width so the items end up inside the curve, and so must be set inside the loop that animates them below
+    TweenMax.set($(nodes), {x:guideLeftPoints[0][1], y:guideLeftPoints[0][2]});
+
+    //Create a tween for each of the left nodes along the same bezier, but a shorter section of it for each consecutive node
+    for(i = 0, quantity = nodes.length, p = quantity - 1; i < quantity; i++, p--) {
+      var leftNode = nodes[i];
+
+      //if there are more than 2 nodes, there can be a node at each end point, but if there are fewer than that, the nodes
+      // should be aligned in such a way that they land closer to the widest point of the arc.
+      if(l > 2) {
+        var section = guideLeftLength/(quantity - 1),
+          pathLength = section * p;
+      } else {
+        var section = guideLeftLength/(quantitiy + 2),
+          pathLength = section * (p+1);
+        p -= 1;
+      }
+      var path = guideLeft.getSubpath(0, pathLength),
         segmentArray = Raphael.parsePathString(path),
         points = [{x:segmentArray[0][1], y:segmentArray[0][2]}, {x:segmentArray[1][1], y:segmentArray[1][2]}, {x:segmentArray[1][3], y:segmentArray[1][4]}, {x:segmentArray[1][5], y:segmentArray[1][6]}];
-        if(i == 0) {
-          globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:points}, ease:Sine.easeOut}), "start");
-        } else {
-          globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:points}, ease:Sine.easeOut}), "-=1.5");
-        }
-    } else {
-      var section = guideLength/(quantitiy + 1),
-        pathLength = section * (p-1),
-        segmentArray = Raphael.parsePathString(path);
-        path = guideLeft.getSubpath(0, pathLength),
-        points = [{x:segmentArray[0][1], y:segmentArray[0][2]}, {x:segmentArray[1][1], y:segmentArray[1][2]}, {x:segmentArray[1][3], y:segmentArray[1][4]}, {x:segmentArray[1][5], y:segmentArray[1][6]}];
-      globalTl.add(TweenMax.to(node, 2, {bezier:{values:points}, ease:Sine.easeOut}), "-=1.5");
+      endPoints.push({x:segmentArray[1][5], y:segmentArray[1][6], node:$(leftNode).attr("id")});
+      pathsPoints.push(points);
     }
-  }
+  } else if(nodes == rightNodes) {
+    //Do the same as above for the right nodes. Starts in reverse of the above loop because I am starting with
+    //2 nodes on the right side.
+    for(j = 0, rQuantity = nodes.length, q = rQuantity; j < rQuantity; j++, q-=2) {
+      var rNode = nodes[j],
+        rNodeW = $(rNode).width();
 
-  for(j = 0, rQuantity = rightNodes.length, q = rQuantity; j < rQuantity; j++, q-=2) {
-    var rNode = rightNodes[j],
-      rNodeW = $(rNode).width();
-    TweenMax.set($(rightNodes), {x:guideRightPoints[0][1]-rNodeW, y:guideRightPoints[0][2]});
-    var rSection = guideRightLength/(rQuantity + 2),
-      rPathLength = rSection * (q+1),
-      rPath = guideRight.getSubpath(0, rPathLength),
-      rSegmentArray = Raphael.parsePathString(rPath),
-      rPoints = [{x:rSegmentArray[0][1]-rNodeW, y:rSegmentArray[0][2]}, {x:rSegmentArray[1][1]-rNodeW, y:rSegmentArray[1][2]}, {x:rSegmentArray[1][3]-rNodeW, y:rSegmentArray[1][4]}, {x:rSegmentArray[1][5]-rNodeW, y:rSegmentArray[1][6]}];
-      console.log(rSegmentArray);
-    if(j == 0) {
-      globalTl.add(TweenMax.to(rNode, 2, {bezier:{values:rPoints}, ease:Sine.easeOut}), "start");
-    } else {
-      globalTl.add(TweenMax.to(rNode, 2, {bezier:{values:rPoints}, ease:Sine.easeOut}), "-=2");
+      //set start point for right nodes
+      TweenMax.set($(rNode), {x:guideRightPoints[0][1]-rNodeW, y:guideRightPoints[0][2]});
+        if(j < 2) {
+        var rSection = guideRightLength/(rQuantity + 2),
+          rPathLength = rSection * (q+1);
+      } else {
+        var rSection = guideRightLength/(rQuandtity - 1),
+          rPathLength = rSection * q;
+      }
+      var rPath = guideRight.getSubpath(0, rPathLength),
+        rSegmentArray = Raphael.parsePathString(rPath),
+        rPoints = [{x:rSegmentArray[0][1]-rNodeW, y:rSegmentArray[0][2]}, {x:rSegmentArray[1][1]-rNodeW, y:rSegmentArray[1][2]}, {x:rSegmentArray[1][3]-rNodeW, y:rSegmentArray[1][4]}, {x:rSegmentArray[1][5]-rNodeW, y:rSegmentArray[1][6]}];
+      endPoints.push({x:rSegmentArray[1][5]-rNodeW, y:rSegmentArray[1][6], node:$(rNode).attr("id")});
+      pathsPoints.push(rPoints);
     }
+  } else {
+    return undefined;
   }
+  var returnVals = {endPoints:endPoints, pathsPoints:pathsPoints};
+  return returnVals;
+  console.log(pathsPoints);
+}
+
+/**
+* Executes the animation to initial positions
+*/
+function alignNodes() {
+  var leftVals = introPaths(leftNodes).pathsPoints,
+    rightVals = introPaths(rightNodes).pathsPoints;
+  leftVals.forEach(function(bezier, i) {
+    var leftNode = leftNodes[i];
+    if(i == 0) {
+      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "start");
+    } else {
+      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "-=1.5");
+    }
+  });
+  rightVals.forEach(function(bezier, i) {
+    var rightNode = rightNodes[i];
+    if(i == 0) {
+      globalTl.add(TweenMax.to(rightNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "start");
+    } else {
+      globalTl.add(TweenMax.to(rightNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "-=1.5");
+    }
+  });
 }
 alignNodes();
 window.onresize = recalculate;
