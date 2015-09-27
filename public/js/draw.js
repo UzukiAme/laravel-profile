@@ -36,8 +36,6 @@ function recalculate() {
   paper = new Raphael("svg-container", windowW, windowH);
   containerDimensions();
   createCenter();
-  introPaths(leftNodes);
-  introPaths(rightNodes);
   repositionStart();
 }
 
@@ -199,21 +197,16 @@ function alignNodes() {
 }
 alignNodes();
 
-
-/**
-* Keep the nodes aligned before anything is clicked when the window is resized.
-*/
 function repositionStart() {
   var left = introPaths(leftNodes).endPoints,
     right = introPaths(rightNodes).endPoints;
   left.forEach(function(item, i) {
     var node = $("#" + item.node);
-    $(node).css({top:item.y, left:item.x, transform:"none"});
+    node.css({top:item.y, left:item.x, transform:"none"});
   });
   right.forEach(function(item, i) {
     var node = $("#" + item.node);
-    $(node).css({top:item.y, left:item.x, transform:"none"});
+    node.css({top:item.y, left:item.x, transform:"none"});
   });
 }
-
 window.onresize = recalculate;
