@@ -36,8 +36,7 @@ function recalculate() {
   paper = new Raphael("svg-container", windowW, windowH);
   containerDimensions();
   createCenter();
-  introPaths();
-  // repositionStart();
+  repositionStart();
 }
 
 
@@ -93,8 +92,6 @@ function containerDimensions() {
 }
 containerDimensions();
 var section = containerDimensions().section;
-
-//Place elements on side arc that begins at a constant y value and ends at a y value that is the height of the window minus a constant value. This way, the arc will expand and shrink with the height of the window. The x coordinates should be a percentage of the window width in typical responsive fashion. At the break point (tbt), the orientation of the nodes will rotate 90 degrees
 
 function createCenter() {
 
@@ -199,4 +196,17 @@ function alignNodes() {
   });
 }
 alignNodes();
+
+function repositionStart() {
+  var left = introPaths(leftNodes).endPoints,
+    right = introPaths(rightNodes).endPoints;
+  left.forEach(function(item, i) {
+    var node = $("#" + item.node);
+    node.css({top:item.y, left:item.x, transform:"none"});
+  });
+  right.forEach(function(item, i) {
+    var node = $("#" + item.node);
+    node.css({top:item.y, left:item.x, transform:"none"});
+  });
+}
 window.onresize = recalculate;
