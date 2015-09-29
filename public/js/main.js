@@ -1,8 +1,10 @@
-var containerW = $(".container").width();
-var containerH = $(".container").height();
+var containerW = $(".container").width(),
+  containerH = $(".container").height(),
+  nodes = $(".node").not("#center"),
+  indexNode = $("#center");
 
 //center with TweenMax to help with browser compatability
-TweenMax.set($("#center-node"), {
+TweenMax.set($("#center"), {
   xPercent: -50,
   yPercent: -50
 });
@@ -62,17 +64,32 @@ function getQuadrant(x, y) {
 *   points in the future. So the name will remain the same.
 * @returns {array} x and y coordinates for the index.
 */
-function elemPoints() {
+function center(node) {
   //get the dimensions of the title element and the center element
-  var indexNode = $("#center-node"),
+  var indexNode = $("#center"),
     centerW = indexNode.innerWidth(),
-    centerH = indexNode.innerHeight();
+    centerH = indexNode.innerHeight(),
+    nodes = $(".node"),
+    nodeCoordinates = {};
+  if(!node) {
+    node = null;
+  } else {
+    nodeCoordinates["x"] = $(node).offset().left;
+    nodeCoordinates["y"] = $(node).offset().top;
+  }
   //find center node's center coordinates
   var centerX = indexNode.offset().left + centerW / 2,
     centerY = indexNode.offset().top + centerH / 2;
   var points = {
-    indexCenterX: centerX,
-    indexCenterY: centerY,
-  };
+    x: centerX,
+    y: centerY,
+    node: nodeCoordinates
+  }
   return points;
 }
+
+$(".node").on("aniStart aniUpdate aniComplete", function() {
+  //get the object whose name is the same as the one that triggered the evaluation
+  //nodeObject[node] gets the object tha contains all the path data and the evaluated coordinates
+  //jquery node Object (nodes), gets a separate object that also contains the coordinates, but does not contain the path data
+});

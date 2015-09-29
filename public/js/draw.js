@@ -1,18 +1,12 @@
 
 /*
-* Make a container for the nodes
-* Give it a z-index of 0 and the index node 1
-* Create a canvas within that container and give it a z-index of -1
-* Create a circle around the index node that represents its final shape
-* Create an arc that mirrors the arc of this circle for the nodes to align on
-* Possibly use GSAP to get coordinates along the circle for end points for raphael drawings
-* Calculate start points by the coordinates of the nodes
-* Draw svg elements with calculated coordinates; Create constructor function that figures (takes?) out the coordinates for a drawing. Use that funciton to create connector objects, each with their own coordinate  concerns, rather than trying to make one function draw every path.
+* Below is a function that calculates the center of the node elements by their end points after the end of the initial
+* animation. However, the center of these elements should always be calculated on the fly based on where the element is now,
+* not where it was at the end of a particular animation. The entire thing needs to be reworked, but my brain is too fried
+* to manage it right now.
 */
 
-var nodes = $(".node").not("#center-node"),
-  indexNode = $("#center-node"),
-  container = $(".container");
+var container = $(".container");
 var windowW = $(window).width(),
   windowH = $(window).height(),
   paper = new Raphael("svg-container", windowW, windowH),
@@ -36,7 +30,12 @@ function recalculate() {
   paper = new Raphael("svg-container", windowW, windowH);
   containerDimensions();
   createCenter();
-  repositionStart();
+  //once click animations are executed, this should no longer execute.
+  var allEndPoints = combineEndPointsArrays().all;
+  $(nodes).each(function(i, node) {
+    var nodeId = $(node).attr("id");
+    $(node).css({left:allEndPoints[nodeId].x, top:allEndPoints[nodeId].y, transform:"none"});
+  });
 }
 
 
@@ -94,10 +93,9 @@ containerDimensions();
 var section = containerDimensions().section;
 
 function createCenter() {
-
   var radius = windowW * .1,
     circumference = Math.PI * radius * 2;
-    indexCircle = paper.circle(elemPoints().indexCenterX, elemPoints().indexCenterY, radius);
+    indexCircle = paper.circle(center().x, center().y, radius);
 }
 createCenter();
 
@@ -155,7 +153,7 @@ function introPaths(nodes) {
         var rSection = guideRightLength/(rQuantity + 2),
           rPathLength = rSection * (q+1);
       } else {
-        var rSection = guideRightLength/(rQuandtity - 1),
+        var rSection = guideRightLength/(rQuantity - 1),
           rPathLength = rSection * q;
       }
       var rPath = guideRight.getSubpath(0, rPathLength),
@@ -169,21 +167,39 @@ function introPaths(nodes) {
   }
   var returnVals = {endPoints:endPoints, pathsPoints:pathsPoints};
   return returnVals;
-  console.log(pathsPoints);
 }
+
+var coordinates = {};
+function test(node) {
+  $(node).on(start, function() {
+    coordinates[$(node).attr("id")] = {x:$(node).offset().left, y:$(node).offset().top};
+  });
+}
+
+/**
+* Keeping access to element coordinates at any given time up to date.
+* Any time an item moves, trigger a custom event on it
+* Whenever that custom event happens, it should cause an update to the appropriate node's global object
+* Get the node in question's id, which should match the name of one of the node objects
+*
+*/
 
 /**
 * Executes the animation to initial positions
 */
 function alignNodes() {
+  function triggerStart(node) {
+    var event = $(node).attr("id") + ".start";
+    $(node).trigger(event);
+  }
   var leftVals = introPaths(leftNodes).pathsPoints,
     rightVals = introPaths(rightNodes).pathsPoints;
   leftVals.forEach(function(bezier, i) {
     var leftNode = leftNodes[i];
     if(i == 0) {
-      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "start");
+      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[leftNode], onComplete:function() {$(leftNode).trigger("update")}}), "start");
     } else {
-      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "-=1.5");
+      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[leftNode]}), "-=1.5");
     }
   });
   rightVals.forEach(function(bezier, i) {
@@ -197,16 +213,93 @@ function alignNodes() {
 }
 alignNodes();
 
-function repositionStart() {
+/**
+* Sets the nodes to the correct end points without going through the whole intro animation. Only called on window resize.
+* @returns {array} all updated end points
+*/
+function combineEndPointsArrays() {
   var left = introPaths(leftNodes).endPoints,
-    right = introPaths(rightNodes).endPoints;
+    right = introPaths(rightNodes).endPoints,
+    all = {};
   left.forEach(function(item, i) {
-    var node = $("#" + item.node);
-    node.css({top:item.y, left:item.x, transform:"none"});
+    all[item.node] = item;
   });
   right.forEach(function(item, i) {
-    var node = $("#" + item.node);
-    node.css({top:item.y, left:item.x, transform:"none"});
+    all[item.node] = item;
+  });
+  return {all:all};
+}
+var allEndPoints = combineEndPointsArrays().all;
+
+function drawConnections() {
+  paper.path("M10 10v100h100");
+  paper.path("M110 120h-100v100");
+  var ref1 = Raphael.angle(10, 10, 110, 110, 10, 110);
+  var ref2 = Raphael.angle( 10, 220, 110, 120, 10, 120);
+  console.log("ref1: " + ref1);
+  console.log("ref2: " + ref2);
+
+  var nodeCenters = {};
+  $(nodes).each(function(i, node) {
+    var nodeId = $(node).attr("id");
+    $(node).on(nodeId + ".start", function() {
+      nodeCenters[nodeId] = {x:$(node).offset().left + $(node).width()/2, y:$(node).offset().top + $(node).height()/2};
+    });
   });
 }
+drawConnections();
+
+function getConnectorStart(node) {
+  //get quadrant
+  //determine which of the four sides the connection from the index will cross
+  //get the two corners that will create the line on that side
+  //create the intersecting path from center to center
+  //create the path on the node that will be intersected
+  //use raphael to get intersection point
+  $(".line").remove();
+  //Get the points for all four corners of the node
+  var node = $(node),
+    top = node.offset().top,
+    left = node.offset().left,
+    width = node.width(),
+    height = node.height(),
+    tl = {x:left, y:top},
+    tr = {x:left + width, y:top},
+    bl = {x:left, y:top + height},
+    br = {x:left + width, y:top + height},
+  //Get the path info for each of the four lines that create the boxes
+    topLine = paper.path("M" + tl.x + " " + tl.y + "L" + tr.x + " " + tr.y),
+    rightLine = paper.path("M" + tr.x + " " + tr.y + "L" + br.x + " " + br.y),
+    bottomLine = paper.path("M" + br.x + " " + br.y + "L" + bl.x + " " + bl.y),
+    leftLine = paper.path("M" + bl.x + " " + bl.y + "L" + tl.x + " " + tl.y),
+  //Get the center of the node
+    nodeCenter = {x:tl.x + width/2, y:tl.y + height/2},
+  //Get the center of the index
+    iCenter = {x:center().x, y:center().y},
+  //Create intersecting line from center to center
+    intersectingLine = paper.path("M" + nodeCenter.x + " " + nodeCenter.y + "L" + iCenter.x + " " + iCenter.y),
+  //Get the angle of the line from center to center
+    angle = Raphael.angle(nodeCenter.x, nodeCenter.y, 0, iCenter.y, iCenter.x, iCenter.y);
+    intersectingLine.node.setAttribute("class", "line");
+    topLine.node.setAttribute("class", "line");
+    leftLine.node.setAttribute("class", "line");
+    bottomLine.node.setAttribute("class", "line");
+    rightLine.node.setAttribute("class", "line");
+  //Use the angle to determine the quadrant
+  //Use the quadrant to determine which side of the node will be intersected
+  //get intersection point using Raphael and return it
+}
+$("#skills").on("update", function() {
+  getConnectorStart("#skills");
+});
+
+
+/**
+* on start, add class "animating"
+* on update, get coordinates and feed them into the function that draws the connections
+* on complete, get the final coordinates and return them as an array. Remove "animating" class
+* on window resize, recalculate the positions based on the final coordinates of the last animation
+*/
+
+
 window.onresize = recalculate;
