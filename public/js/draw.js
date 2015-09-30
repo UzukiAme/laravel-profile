@@ -232,9 +232,9 @@ function combineEndPointsArrays() {
 var allEndPoints = combineEndPointsArrays().all;
 
 function drawConnections() {
-  paper.path("M10 10v100h100");
+  paper.path("M10 10h100");
   paper.path("M110 120h-100v100");
-  var ref1 = Raphael.angle(10, 10, 110, 110, 10, 110);
+  var ref1 = Raphael.angle( 110, 10,10, 10);
   var ref2 = Raphael.angle( 10, 220, 110, 120, 10, 120);
   console.log("ref1: " + ref1);
   console.log("ref2: " + ref2);
@@ -249,50 +249,31 @@ function drawConnections() {
 }
 drawConnections();
 
+/**
+* Get the coordinates for the point where the connection between the index and a given node touches the node
+* @param {object} jQuery object for the node in question
+* @returns {array} x and y of the intersection point
+*/
 function getConnectorStart(node) {
-  //get quadrant
-  //determine which of the four sides the connection from the index will cross
-  //get the two corners that will create the line on that side
-  //create the intersecting path from center to center
-  //create the path on the node that will be intersected
-  //use raphael to get intersection point
-  $(".line").remove();
-  //Get the points for all four corners of the node
-  var node = $(node),
-    top = node.offset().top,
-    left = node.offset().left,
+  var corners = getNodeCorners(node),
     width = node.width(),
     height = node.height(),
-    tl = {x:left, y:top},
-    tr = {x:left + width, y:top},
-    bl = {x:left, y:top + height},
-    br = {x:left + width, y:top + height},
-  //Get the path info for each of the four lines that create the boxes
-    topLine = paper.path("M" + tl.x + " " + tl.y + "L" + tr.x + " " + tr.y),
-    rightLine = paper.path("M" + tr.x + " " + tr.y + "L" + br.x + " " + br.y),
-    bottomLine = paper.path("M" + br.x + " " + br.y + "L" + bl.x + " " + bl.y),
-    leftLine = paper.path("M" + bl.x + " " + bl.y + "L" + tl.x + " " + tl.y),
-  //Get the center of the node
-    nodeCenter = {x:tl.x + width/2, y:tl.y + height/2},
-  //Get the center of the index
+    nodeCenter = {x:corners.tl.x + width/2, y:corners.tl.y + height/2},
     iCenter = {x:center().x, y:center().y},
-  //Create intersecting line from center to center
-    intersectingLine = paper.path("M" + nodeCenter.x + " " + nodeCenter.y + "L" + iCenter.x + " " + iCenter.y),
-  //Get the angle of the line from center to center
-    angle = Raphael.angle(nodeCenter.x, nodeCenter.y, 0, iCenter.y, iCenter.x, iCenter.y);
-    intersectingLine.node.setAttribute("class", "line");
-    topLine.node.setAttribute("class", "line");
-    leftLine.node.setAttribute("class", "line");
-    bottomLine.node.setAttribute("class", "line");
-    rightLine.node.setAttribute("class", "line");
-  //Use the angle to determine the quadrant
-  //Use the quadrant to determine which side of the node will be intersected
-  //get intersection point using Raphael and return it
+  //create intersecting path
+    intersectingPath = "M" + nodeCenter.x + " " + nodeCenter.y + "L" + iCenter.x + " " + iCenter.y,
+  //get angle
+    angle = Raphael.angle(nodeCenter.x, nodeCenter.y, 0, iCenter.y, iCenter.x, iCenter.y),
+  //get quadrant
+    quadrant = getQuadrant(angle),
+  //determine which of the four sides the connection from the index will cross
+    sidePoints = getNodeCorners(quadrant, node),
+  //create the intersected line
+    side = "M" + sidePoints[0].x + " " + sidePoints[0].y + "L" + sidePoints[1].x + " " + sidePoints[1].y,
+  //use raphael to get intersection point
+    intersection = Raphael.pathIntersection(side, intersectingPath);
+    return {x:intersection.x, y:intersection.y};
 }
-$("#skills").on("update", function() {
-  getConnectorStart("#skills");
-});
-
 
 /**
 * on start, add class "animating"
