@@ -232,20 +232,7 @@ function combineEndPointsArrays() {
 var allEndPoints = combineEndPointsArrays().all;
 
 function drawConnections() {
-  paper.path("M10 10h100");
-  paper.path("M110 120h-100v100");
-  var ref1 = Raphael.angle( 110, 10,10, 10);
-  var ref2 = Raphael.angle( 10, 220, 110, 120, 10, 120);
-  console.log("ref1: " + ref1);
-  console.log("ref2: " + ref2);
 
-  var nodeCenters = {};
-  $(nodes).each(function(i, node) {
-    var nodeId = $(node).attr("id");
-    $(node).on(nodeId + ".start", function() {
-      nodeCenters[nodeId] = {x:$(node).offset().left + $(node).width()/2, y:$(node).offset().top + $(node).height()/2};
-    });
-  });
 }
 drawConnections();
 
@@ -274,13 +261,5 @@ function getConnectorStart(node) {
     intersection = Raphael.pathIntersection(side, intersectingPath);
     return {x:intersection.x, y:intersection.y};
 }
-
-/**
-* on start, add class "animating"
-* on update, get coordinates and feed them into the function that draws the connections
-* on complete, get the final coordinates and return them as an array. Remove "animating" class
-* on window resize, recalculate the positions based on the final coordinates of the last animation
-*/
-
 
 window.onresize = recalculate;
