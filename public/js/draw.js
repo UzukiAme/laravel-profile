@@ -191,23 +191,30 @@ function alignNodes() {
   function triggerStart(node) {
     var event = $(node).attr("id") + ".start";
     $(node).trigger(event);
+    $(".node").trigger("start");
   }
+  function triggerEnd(node) {
+    $(".node").trigger($(node).attr("id") + ".end");
+  };
+  function triggerUpdate() {
+    $(".node").trigger("update");
+  };
   var leftVals = introPaths(leftNodes).pathsPoints,
     rightVals = introPaths(rightNodes).pathsPoints;
   leftVals.forEach(function(bezier, i) {
     var leftNode = leftNodes[i];
     if(i == 0) {
-      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[leftNode], onComplete:function() {$(leftNode).trigger("update")}}), "start");
+      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[leftNode], onComplete:triggerEnd, onCompleteParams:[leftNode], onUpdate:triggerUpdate}), "start");
     } else {
-      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[leftNode]}), "-=1.5");
+      globalTl.add(TweenMax.to(leftNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[leftNode], onComplete:triggerEnd, onCompleteParams:[leftNode],onUpdate:triggerUpdate}), "-=1.5");
     }
   });
   rightVals.forEach(function(bezier, i) {
     var rightNode = rightNodes[i];
     if(i == 0) {
-      globalTl.add(TweenMax.to(rightNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "start");
+      globalTl.add(TweenMax.to(rightNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[rightNode], onComplete:triggerEnd, onCompleteParams:[rightNode], onUpdate:triggerUpdate}), "start");
     } else {
-      globalTl.add(TweenMax.to(rightNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut}), "-=1.5");
+      globalTl.add(TweenMax.to(rightNode, 2, {bezier:{values:bezier}, ease:Sine.easeOut, onStart:triggerStart, onStartParams:[rightNode], onComplete:triggerEnd, onCompleteParams:[rightNode], onUpdate:triggerUpdate}), "-=1.5");
     }
   });
 }
@@ -231,11 +238,6 @@ function combineEndPointsArrays() {
 }
 var allEndPoints = combineEndPointsArrays().all;
 
-function drawConnections() {
-
-}
-drawConnections();
-
 /**
 * Get the coordinates for the point where the connection between the index and a given node touches the node
 * @param {object} jQuery object for the node in question
@@ -243,23 +245,27 @@ drawConnections();
 */
 function getConnectorStart(node) {
   var corners = getNodeCorners(node),
-    width = node.width(),
-    height = node.height(),
+    width = $(node).width(),
+    height = $(node).height(),
     nodeCenter = {x:corners.tl.x + width/2, y:corners.tl.y + height/2},
     iCenter = {x:center().x, y:center().y},
-  //create intersecting path
     intersectingPath = "M" + nodeCenter.x + " " + nodeCenter.y + "L" + iCenter.x + " " + iCenter.y,
-  //get angle
     angle = Raphael.angle(nodeCenter.x, nodeCenter.y, 0, iCenter.y, iCenter.x, iCenter.y),
-  //get quadrant
-    quadrant = getQuadrant(angle),
-  //determine which of the four sides the connection from the index will cross
-    sidePoints = getNodeCorners(quadrant, node),
-  //create the intersected line
-    side = "M" + sidePoints[0].x + " " + sidePoints[0].y + "L" + sidePoints[1].x + " " + sidePoints[1].y,
-  //use raphael to get intersection point
-    intersection = Raphael.pathIntersection(side, intersectingPath);
-    return {x:intersection.x, y:intersection.y};
+    quadrant = getQuadrant(angle);
+    sidePoints = getNodeCorners(node, quadrant),
+    side = "M" + sidePoints[0].x + " " + sidePoints[0].y + "L" + sidePoints[1].x + " " + sidePoints[1].y;
+    var intersection = Raphael.pathIntersection(side, intersectingPath);
+  return {x:intersection[0].x, y:intersection[0].y};
 }
+
+function drawConnections() {
+  var nodes = $(".node").not("#center");
+  nodes.each(function(i, node) {
+    $(node).on($(node).attr("id") + ".end", function() {
+      var intersection = getConnectorStart(node);
+    });
+  });
+}
+drawConnections();
 
 window.onresize = recalculate;

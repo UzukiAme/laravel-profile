@@ -16,34 +16,24 @@ TweenMax.set($("#center"), {
 *   Defaults to null if there are no coordinates put in
 */
 function getQuadrant(angle) {
-  switch (angle) {
-    case angle < 0 && angle > 90:
-      return "bottom-left";
-      break;
-    case angle < 0 && angle < 90:
-      return "bottom-right";
-      break;
-    case angle > 0 && angle < 90:
-      return "top-left";
-      break;
-    case angle > 0 && angle > 90:
-      return "top-right";
-      break;
-    case angle == 0:
-      return "left";
-      break;
-    case angle == 90:
-      return "up";
-      break;
-    case angle == 180:
-      return "right";
-      break;
-    case angle == -90:
-      return "down";
-      break;
-    default:
-      return null;
-      break;
+  if(angle < 0 && angle > -90){
+    return "bottom-left";
+  } else if(angle < 0 && angle < -90) {
+    return "bottom-right";
+  } else if(angle > 0 && angle < 90) {
+    return "top-left";
+  } else if(angle > 0 && angle > 90) {
+    return "top-right";
+  } else if(angle == 0) {
+    return "left";
+  } else if(angle == 90) {
+    return "up";
+  } else if(angle == 180) {
+    return "right";
+  } else if(angle == -90) {
+    return "down";
+  } else {
+    return null;
   }
 }
 
@@ -54,39 +44,35 @@ function getQuadrant(angle) {
 * @param {object} jQuery object for the node in question
 * @returns {object} either coordinates for all four corners or coordinates for the side that faces the index
 */
-function getNodeCorners(quadrant, node) {
+function getNodeCorners(node, quadrant) {
   var quadrant = quadrant || null,
-    node = $(node),
-    top = node.offset().top,
-    left = node.offset().left,
-    coordinates = {
+    top = $(node).offset().top,
+    left = $(node).offset().left,
+    width =$(node).width(),
+    height = $(node).height(),
+    corners = {
       tl:{x:left, y:top},
       tr:{x:left + width, y:top},
       bl:{x:left, y:top + height},
       br:{x:left + width, y:top + height}
     };
   if(quadrant != null) {
-    switch(quadrant) {
-      case "top-left" || "up" || "top-right":
-        return [coordinates.bl, coordinates.br];
-        break;
-      case "right":
-        return [coordinates.tl, coordinates.bl];
-        break;
-      case "bottom-right" || "down" || "bottom-left":
-        return [coordinates.tl, coordinates.tr];
-        break;
-      case "left":
-        return [coordinates.tr, coordinates.br];
-        break;
-      default:
-        return null;
-        break;
+    if(quadrant == "top-left" || quadrant == "left" || quadrant == "bottom-left") {
+      return [corners.tr, corners.br];
+    } else if(quadrant == "up") {
+      return [corners.bl, corners.br];
+    } else if(quadrant == "bottom-right" || quadrant == "right" || quadrant == "top-right") {
+      return [corners.tl, corners.bl];
+    } else if(quadrant == "bottom") {
+      return [corners.tr, corners.tl];
     } else {
-      return coordinates;
+      return null;
     }
+  } else {
+      return corners;
   }
 }
+
 
 /**
 * Get the x and y coordinates, relative to the window, of the center of the index node.
@@ -95,13 +81,11 @@ function getNodeCorners(quadrant, node) {
 * @returns {array} x and y coordinates for the index.
 */
 function center() {
-  //get the dimensions of the title element and the center element
   var indexNode = $("#center"),
     centerW = indexNode.innerWidth(),
     centerH = indexNode.innerHeight(),
     nodes = $(".node"),
     nodeCoordinates = {};
-  //find center node's center coordinates
   var centerX = indexNode.offset().left + centerW / 2,
     centerY = indexNode.offset().top + centerH / 2;
   var points = {
@@ -111,9 +95,3 @@ function center() {
   }
   return points;
 }
-
-$(".node").on("aniStart aniUpdate aniComplete", function() {
-  //get the object whose name is the same as the one that triggered the evaluation
-  //nodeObject[node] gets the object tha contains all the path data and the evaluated coordinates
-  //jquery node Object (nodes), gets a separate object that also contains the coordinates, but does not contain the path data
-});
