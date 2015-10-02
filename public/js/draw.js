@@ -169,21 +169,6 @@ function introPaths(nodes) {
   return returnVals;
 }
 
-var coordinates = {};
-function test(node) {
-  $(node).on(start, function() {
-    coordinates[$(node).attr("id")] = {x:$(node).offset().left, y:$(node).offset().top};
-  });
-}
-
-/**
-* Keeping access to element coordinates at any given time up to date.
-* Any time an item moves, trigger a custom event on it
-* Whenever that custom event happens, it should cause an update to the appropriate node's global object
-* Get the node in question's id, which should match the name of one of the node objects
-*
-*/
-
 /**
 * Executes the animation to initial positions
 */
@@ -194,7 +179,8 @@ function alignNodes() {
     $(".node").trigger("start");
   }
   function triggerEnd(node) {
-    $(".node").trigger($(node).attr("id") + ".end");
+    var event = $(node).attr("id") + ".end";
+    $(node).trigger(event);
   };
   function triggerUpdate() {
     $(".node").trigger("update");
@@ -239,33 +225,96 @@ function combineEndPointsArrays() {
 var allEndPoints = combineEndPointsArrays().all;
 
 /**
-* Get the coordinates for the point where the connection between the index and a given node touches the node
+* Get the coordinates for the farthest ends of the connection from the index to the outer nodes
 * @param {object} jQuery object for the node in question
-* @returns {array} x and y of the intersection point
+* @returns {array} x and y of the intersection point on the node and on the circle
 */
-function getConnectorStart(node) {
-  var corners = getNodeCorners(node),
-    width = $(node).width(),
-    height = $(node).height(),
-    nodeCenter = {x:corners.tl.x + width/2, y:corners.tl.y + height/2},
+function getBoundingPoints(node) {
+  var node = $(node),
+    width = node.width(),
+    height = node.height(),
+    top = node.offset().top,
+    left = node.offset().left,
+    width = node.width(),
+    height = node.height(),
+
+    //set the coordinates for each of the four corners of the node in question
+    corners = {
+      tl:{x:left, y:top},
+      tr:{x:left + width, y:top},
+      bl:{x:left, y:top + height},
+      br:{x:left + width, y:top + height}
+    },
+
+    //create the path string for each side
+    sides = {
+      top:"M" + corners.tl.x + " " + corners.tl.y + "L" + corners.tr.x + " " + corners.tr.y,
+      right:"M" + corners.tr.x + " " + corners.tr.y + "L" + corners.br.x + " " + corners.br.y,
+      bottom:"M" + corners.bl.x + " " + corners.bl.y + "L" + corners.br.x + " " + corners.br.y,
+      left:"M" + corners.tl.x + " " + corners.tl.y + "L" + corners.bl.x + " " + corners.bl.y
+    },
+
+    //create the path from the center of the index to the center of the outer node
     iCenter = {x:center().x, y:center().y},
+    nodeCenter = {x:left + width/2, y:top + height/2},
     intersectingPath = "M" + nodeCenter.x + " " + nodeCenter.y + "L" + iCenter.x + " " + iCenter.y,
-    angle = Raphael.angle(nodeCenter.x, nodeCenter.y, 0, iCenter.y, iCenter.x, iCenter.y),
+    angle = Raphael.angle(nodeCenter.x, nodeCenter.y, windowW, iCenter.y, iCenter.x, iCenter.y),
     quadrant = getQuadrant(angle);
-    sidePoints = getNodeCorners(node, quadrant),
-    side = "M" + sidePoints[0].x + " " + sidePoints[0].y + "L" + sidePoints[1].x + " " + sidePoints[1].y;
-    var intersection = Raphael.pathIntersection(side, intersectingPath);
-  return {x:intersection[0].x, y:intersection[0].y};
+
+    /**
+    * Check to see which of the two sides on the outer node is crossed by the connecting line and return the.
+    *   coordinates of that intersection.
+    * @param {string} the paths to compare
+    * @returns {object} intersection information
+    */
+    function getIntersection(side1, side2) {
+      intersect1 = Raphael.pathIntersection(side1, intersectingPath),
+      intersect2 = Raphael.pathIntersection(side2, intersectingPath);
+      if($.isEmptyObject(intersect1)) {
+        return intersect2;
+      } else {
+        return intersect1;
+      }
+    }
+
+    //Depending on the quadrant, the connection will cross one of two sides on the node.
+    //Using the above function, determine which of the two sides the connecting line crosses
+    if(quadrant == "bottom-right") {
+      var side1 = sides.left,
+        side2 = sides.right,
+        intersection = getSide(side1, side2);
+    } else if(quadrant == "bottom-left") {
+      var side1 = sides.top,
+        side2 = sides.right,
+        intersection = getSide(side1, side2);
+    } else if(quadrant == "top-left") {
+      var side1 = sides.bottom,
+        side2 = sides.right,
+        intersection = getSide(side1, side2);
+    } else if(quadrant == "top-right") {
+      var side1 = sides.bottom,
+        side2 = sides.left,
+        intersection = getSide(side1, side2);
+    }
+
+    //Get the point on the center circle where the connecting line crosses
+    var cix = iCenter.x + (windowW * .1) * Math.cos(Raphael.rad(angle)),
+      ciy = iCenter.y + (windowW * .1) * Math.sin(Raphael.rad(angle));
+    return {node:{x:intersection[0].x, y:intersection[0].y}, circle:{x:cix, y:ciy}};
 }
 
+
 function drawConnections() {
-  var nodes = $(".node").not("#center");
   nodes.each(function(i, node) {
-    $(node).on($(node).attr("id") + ".end", function() {
-      var intersection = getConnectorStart(node);
+    $(node).on($(node).attr("id") + ".start", function() {
+      getBoundingPoints(node);
+      var nodeSide = getBoundingPoints(node).node,
+        circleSide = getBoundingPoints(node).circle;
     });
   });
 }
 drawConnections();
+
+
 
 window.onresize = recalculate;

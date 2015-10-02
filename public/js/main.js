@@ -16,22 +16,14 @@ TweenMax.set($("#center"), {
 *   Defaults to null if there are no coordinates put in
 */
 function getQuadrant(angle) {
-  if(angle < 0 && angle > -90){
-    return "bottom-left";
-  } else if(angle < 0 && angle < -90) {
+  if(angle > 0 && angle <= 90){
     return "bottom-right";
-  } else if(angle > 0 && angle < 90) {
+  } else if(angle > 90 && angle <= 180) {
+    return "bottom-left";
+  } else if(angle > 180 && angle <= 270) {
     return "top-left";
-  } else if(angle > 0 && angle > 90) {
+  } else if(angle > 270 && angle <= 360) {
     return "top-right";
-  } else if(angle == 0) {
-    return "left";
-  } else if(angle == 90) {
-    return "up";
-  } else if(angle == 180) {
-    return "right";
-  } else if(angle == -90) {
-    return "down";
   } else {
     return null;
   }
@@ -44,33 +36,8 @@ function getQuadrant(angle) {
 * @param {object} jQuery object for the node in question
 * @returns {object} either coordinates for all four corners or coordinates for the side that faces the index
 */
-function getNodeCorners(node, quadrant) {
-  var quadrant = quadrant || null,
-    top = $(node).offset().top,
-    left = $(node).offset().left,
-    width =$(node).width(),
-    height = $(node).height(),
-    corners = {
-      tl:{x:left, y:top},
-      tr:{x:left + width, y:top},
-      bl:{x:left, y:top + height},
-      br:{x:left + width, y:top + height}
-    };
-  if(quadrant != null) {
-    if(quadrant == "top-left" || quadrant == "left" || quadrant == "bottom-left") {
-      return [corners.tr, corners.br];
-    } else if(quadrant == "up") {
-      return [corners.bl, corners.br];
-    } else if(quadrant == "bottom-right" || quadrant == "right" || quadrant == "top-right") {
-      return [corners.tl, corners.bl];
-    } else if(quadrant == "bottom") {
-      return [corners.tr, corners.tl];
-    } else {
-      return null;
-    }
-  } else {
-      return corners;
-  }
+function getNodeCorners(node, path, quadrant) {
+  
 }
 
 
