@@ -1,7 +1,9 @@
 var containerW = $(".container").width(),
   containerH = $(".container").height(),
   nodes = $(".node").not("#center"),
-  indexNode = $("#center");
+  indexNode = $("#center"),
+  windowW = $(window).width(),
+  windowH = $(window).height();
 
 //center with TweenMax to help with browser compatability
 TweenMax.set($("#center"), {
@@ -30,35 +32,51 @@ function getQuadrant(angle) {
 }
 
 /**
-* Get the coordinates that create the line on the side of a node that faces the
-*   index at any gived position within the window, or all four corners if no quadrant is given
-* @param {string} the quadrant descriptor from the above quadrant function
-* @param {object} jQuery object for the node in question
-* @returns {object} either coordinates for all four corners or coordinates for the side that faces the index
-*/
-function getNodeCorners(node, path, quadrant) {
-  
-}
-
-
-/**
 * Get the x and y coordinates, relative to the window, of the center of the index node.
 *   Currently this funcion only gets one point. However, I anticipate needing to include other
 *   points in the future. So the name will remain the same.
 * @returns {array} x and y coordinates for the index.
 */
-function center() {
+function center(node) {
   var indexNode = $("#center"),
+    node = $(node) || null,
     centerW = indexNode.innerWidth(),
     centerH = indexNode.innerHeight(),
+    nodeW = node.width() || 0,
+    nodeH = node.height() || 0,
+    nodeC = node.offset() || 0,
+    nodeT = nodeC.top,
+    nodeL = nodeC.left,
     nodes = $(".node"),
-    nodeCoordinates = {};
+    nodeCenter = {x:nodeL + nodeW/2, y:nodeT + nodeH/2};
   var centerX = indexNode.offset().left + centerW / 2,
     centerY = indexNode.offset().top + centerH / 2;
   var points = {
     x: centerX,
     y: centerY,
-    node: nodeCoordinates
+    node: nodeCenter
   }
   return points;
+}
+
+/**
+* Get the angle the node is currently at relative to the center of the index
+* @param {object} jquery object
+*/
+function getAngle(node) {
+  var centers = center(node),
+    indexC = {x:centers.x, y:centers.y},
+    nodeCenter = {x:centers.node.x, y:centers.node.y};
+  return Raphael.angle(nodeCenter.x, nodeCenter.y, windowW, indexC.y, indexC.x, indexC.y);
+}
+
+/**
+* Perform the math to get a paint on the inner circle along which everytthing is
+*   aligned
+*/
+function getCircleIntersect(angle) {
+  var centers = center(),
+    x = centers.x + (windowW * .1) * Math.cos(Raphael.rad(angle)),
+    y = centers.y + (windowW * .1) * Math.sin(Raphael.rad(angle));
+  return {x:x, y:y}
 }

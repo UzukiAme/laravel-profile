@@ -1,11 +1,4 @@
 
-/*
-* Below is a function that calculates the center of the node elements by their end points after the end of the initial
-* animation. However, the center of these elements should always be calculated on the fly based on where the element is now,
-* not where it was at the end of a particular animation. The entire thing needs to be reworked, but my brain is too fried
-* to manage it right now.
-*/
-
 var container = $(".container");
 var windowW = $(window).width(),
   windowH = $(window).height(),
@@ -22,7 +15,7 @@ function recalculate() {
   windowW = $(window).width();
   windowH = $(window).height();
   if($("svg")) {
-    $("svg").remove();
+    $("path").not(".connector").remove();
   }
   if($(".end-left")) {
     $(".end-left").remove();
@@ -83,15 +76,6 @@ var leftNodes = divideNodes(nodes).screenLeft,
   rightNodes = divideNodes(nodes).screenRight,
   divisions = divideNodes(nodes);
 
-function containerDimensions() {
-  var section = windowW/(nodes.length + 2);
-
-  var dimensions = {section:section};
-  return dimensions;
-}
-containerDimensions();
-var section = containerDimensions().section;
-
 function createCenter() {
   var radius = windowW * .1,
     circumference = Math.PI * radius * 2;
@@ -112,8 +96,8 @@ function introPaths(nodes) {
     guideRightPoints = Raphael.parsePathString(guidePathRight),
     guideLeftPoints = Raphael.parsePathString(guidePathLeft),
     guideLeft = paper.path(guidePathLeft).attr({"stroke":"transparent"}),
-    guideLeftLength = guideLeft.getTotalLength(),
-    guideRightLength = guideRight.getTotalLength();
+    guideLeftLength = Raphael.getTotalLength(guidePathLeft),
+    guideRightLength = Raphael.getTotalLength(guidePathRight);
 
   if(nodes == leftNodes) {
     //Set the start point for the left nodes based on where the bezier path starts
@@ -224,6 +208,7 @@ function combineEndPointsArrays() {
 }
 var allEndPoints = combineEndPointsArrays().all;
 
+
 /**
 * Get the coordinates for the farthest ends of the connection from the index to the outer nodes
 * @param {object} jQuery object for the node in question
@@ -231,12 +216,12 @@ var allEndPoints = combineEndPointsArrays().all;
 */
 function getBoundingPoints(node) {
   var node = $(node),
-    width = node.width(),
-    height = node.height(),
     top = node.offset().top,
     left = node.offset().left,
     width = node.width(),
     height = node.height(),
+    centers = center(node),
+    angle = getAngle(node),
 
     //set the coordinates for each of the four corners of the node in question
     corners = {
@@ -255,10 +240,7 @@ function getBoundingPoints(node) {
     },
 
     //create the path from the center of the index to the center of the outer node
-    iCenter = {x:center().x, y:center().y},
-    nodeCenter = {x:left + width/2, y:top + height/2},
-    intersectingPath = "M" + nodeCenter.x + " " + nodeCenter.y + "L" + iCenter.x + " " + iCenter.y,
-    angle = Raphael.angle(nodeCenter.x, nodeCenter.y, windowW, iCenter.y, iCenter.x, iCenter.y),
+    intersectingPath = "M" + centers.node.x + " " + centers.node.y + "L" + centers.x + " " + centers.y,
     quadrant = getQuadrant(angle);
 
     /**
@@ -282,39 +264,75 @@ function getBoundingPoints(node) {
     if(quadrant == "bottom-right") {
       var side1 = sides.left,
         side2 = sides.right,
-        intersection = getSide(side1, side2);
+        intersection = getIntersection(side1, side2);
     } else if(quadrant == "bottom-left") {
       var side1 = sides.top,
         side2 = sides.right,
-        intersection = getSide(side1, side2);
+        intersection = getIntersection(side1, side2);
     } else if(quadrant == "top-left") {
       var side1 = sides.bottom,
         side2 = sides.right,
-        intersection = getSide(side1, side2);
+        intersection = getIntersection(side1, side2);
     } else if(quadrant == "top-right") {
       var side1 = sides.bottom,
         side2 = sides.left,
-        intersection = getSide(side1, side2);
+        intersection = getIntersection(side1, side2);
     }
 
     //Get the point on the center circle where the connecting line crosses
-    var cix = iCenter.x + (windowW * .1) * Math.cos(Raphael.rad(angle)),
-      ciy = iCenter.y + (windowW * .1) * Math.sin(Raphael.rad(angle));
+    var cix = getCircleIntersect(angle).x,
+      ciy = getCircleIntersect(angle).y;
     return {node:{x:intersection[0].x, y:intersection[0].y}, circle:{x:cix, y:ciy}};
 }
 
-
-function drawConnections() {
-  nodes.each(function(i, node) {
-    $(node).on($(node).attr("id") + ".start", function() {
-      getBoundingPoints(node);
-      var nodeSide = getBoundingPoints(node).node,
-        circleSide = getBoundingPoints(node).circle;
-    });
-  });
+function drawConnections(node) {
+  var node = $(node),
+    points = getBoundingPoints(node),
+    start = points.node,
+    end = points.circle,
+    guide = "M" + start.x + " " + start.y + "L" + end.x + " " + end.y,
+    length = Raphael.getTotalLength(guide),
+    angle = getAngle(node),
+    quadrant = getQuadrant(angle);
+    if(quadrant == "top-right" || quadrant == "bottom-right") {
+      var control1 = {x:start.x - length/2, y:start.y - 10},
+      control4 = {x:start.x - length/2, y:start.y + 10},
+      ciTop = getCircleIntersect(angle - 9),
+      ciBottom = getCircleIntersect(angle + 9)
+    } else {
+      var control1 = {x:start.x + length/2, y:start.y - 10},
+      control4 = {x:start.x + length/2, y:start.y + 10},
+      ciTop = getCircleIntersect(angle + 9),
+      ciBottom = getCircleIntersect(angle - 9)
+    }
+    var controls = {
+      control1:control1,
+      control2:{x:ciTop.x, y:ciTop.y},
+      anchor:{x:end.x, y:end.y},
+      control3:{x:ciBottom.x, y:ciBottom.y},
+      control4:control4,
+      anchor2:{x:start.x, y:start.y}
+    },
+    connectingPath = "M" + start.x + " " + start.y + "C" + controls.control1.x + " " + controls.control1.y + " " + controls.control2.x + " " + controls.control2.y + " " + controls.anchor.x + " " + controls.anchor.y + "C" + controls.control3.x + " " + controls.control3.y + " " + controls.control4.x + " " + controls.control4.y + " " + controls.anchor2.x + " " + controls.anchor2.y;
+    connector = paper.path(connectingPath);
+    if(quadrant == "top-left" || quadrant == "bottom-left") {
+      connector.attr({"stroke":"transparent", "fill":"0-#20272E-#A6C8EB"});
+    } else {
+      connector.attr({"stroke":"transparent", "fill":"0-#A6C8EB-#20272E"});
+    }
+    connector.node.setAttribute("class", "connector");
 }
-drawConnections();
+
+$(nodes).each(function(i, node) {
+  $(node).on($(node).attr("id") + ".end", function() {
+    drawConnections($(node));
+  });
+});
 
 
+//if the path selector with the attr plugin doesn't work, set up access to each individual paper.path() declaration via globally scoped variables so the raphael plugin can manipulate them.
+$("#skills").on($("#skills").attr("id") + ".end", function() {
+  TweenMax.to($("path.skills-connector"), 2, {attr:{d:"M10 10C0 20 0 40 10 40C20 40 20 20 10 10", stroke:"black"}});
+});
 
 window.onresize = recalculate;
